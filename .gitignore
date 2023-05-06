@@ -34,3 +34,6 @@
 # Platformio
 .pio
 .vscode
+
+include/Version.h
+
