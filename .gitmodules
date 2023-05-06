@@ -4,3 +4,6 @@
 [submodule "lib/ESP32-OTA-Pull"]
 	path = lib/ESP32-OTA-Pull
 	url = https://github.com/mhaberler/ESP32-OTA-Pull.git
+[submodule "platformio_version_increment"]
+	path = platformio_version_increment
+	url = https://github.com/mhaberler/platformio_version_increment.git
