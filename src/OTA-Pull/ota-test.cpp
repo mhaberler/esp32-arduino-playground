@@ -6,10 +6,11 @@
 
 #include <Arduino.h>
 #include <Version.h>
+// #define OTA_PULL_BOARD BOARD
 
 const char *CurrentVersion = VERSION;
 const char *jsonUrl = JSON_URL;
-// const char *board = BOARD;
+const char *board = OTA_PULL_BOARD;
 // const char *device = DEVICE;
 
 #include "ESP32OTAPull.h"
@@ -55,12 +56,15 @@ void setup() {
   ota.SetCallback(callback);
   Serial.printf(
       "We are running version %s of the sketch, Board='%s', Device='%s'.\n",
-      CurrentVersion, ARDUINO_BOARD, WiFi.macAddress().c_str());
+      CurrentVersion, OTA_PULL_BOARD, WiFi.macAddress().c_str());
   Serial.printf("Checking %s to see if an update is available...\n", jsonUrl);
-  int ret = ota.CheckForOTAUpdate(jsonUrl, CurrentVersion);
+
+  // just check, do not actually update
+  int ret =
+      ota.CheckForOTAUpdate(jsonUrl, CurrentVersion); // , ota.DONT_DO_UPDATE);
   Serial.printf("CheckForOTAUpdate returned %d (%s)\n\n", ret, errtext(ret));
-  
-#ifdef FAKE_VERSIONNUMBER
+
+#ifdef FORCE_UPDATE
   delay(3000);
 
   // Second example: update *will* happen because we are pretending we have an
@@ -71,6 +75,8 @@ void setup() {
   Serial.printf("(If the update succeeds, the reboot should prevent us ever "
                 "getting here.)\n");
   Serial.printf("CheckOTAForUpdate returned %d (%s)\n\n", ret, errtext(ret));
+#else
+  Serial.printf("\n\ncontinuing to run existing version\n\n");
 #endif
 }
 
@@ -105,7 +111,7 @@ const char *errtext(int code) {
 void DisplayInfo() {
   char exampleImageURL[256];
   snprintf(exampleImageURL, sizeof(exampleImageURL),
-           "https://example.com/Basic-OTA-Example-%s-%s.bin", ARDUINO_BOARD,
+           "https://example.com/Basic-OTA-Example-%s-%s.bin", OTA_PULL_BOARD,
            CurrentVersion);
 
   Serial.printf("Basic-OTA-Example v%s\n", CurrentVersion);
@@ -113,7 +119,7 @@ void DisplayInfo() {
   Serial.printf("{\n");
   Serial.printf("  \"Configurations\": [\n");
   Serial.printf("    {\n");
-  Serial.printf("      \"Board\": \"%s\",\n", ARDUINO_BOARD);
+  Serial.printf("      \"Board\": \"%s\",\n", OTA_PULL_BOARD);
   Serial.printf("      \"Device\": \"%s\",\n", WiFi.macAddress().c_str());
   Serial.printf("      \"Version\": %s,\n", CurrentVersion);
   Serial.printf("      \"URL\": \"%s\"\n", exampleImageURL);
