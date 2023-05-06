@@ -37,3 +37,4 @@
 
 include/Version.h
 
+.version_no_increment

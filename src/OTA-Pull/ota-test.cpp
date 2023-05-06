@@ -1,11 +1,11 @@
 // see  lib/ESP32-OTA-Pull/examples/Basic-OTA-Example/Basic-OTA-Example.ino
 
-
 #ifdef M5UNIFIED
 #include <M5Unified.h>
 #endif
 
 #include <Arduino.h>
+#include <Version.h>
 
 const char *CurrentVersion = VERSION;
 const char *jsonUrl = JSON_URL;
@@ -51,7 +51,7 @@ void setup() {
   // ota.OverrideBoard(board);
   // ota.OverrideDevice(device);
   // ota.AllowDowngrades(true);
-  
+
   ota.SetCallback(callback);
   Serial.printf(
       "We are running version %s of the sketch, Board='%s', Device='%s'.\n",
@@ -59,7 +59,8 @@ void setup() {
   Serial.printf("Checking %s to see if an update is available...\n", jsonUrl);
   int ret = ota.CheckForOTAUpdate(jsonUrl, CurrentVersion);
   Serial.printf("CheckForOTAUpdate returned %d (%s)\n\n", ret, errtext(ret));
-
+  
+#ifdef FAKE_VERSIONNUMBER
   delay(3000);
 
   // Second example: update *will* happen because we are pretending we have an
@@ -70,6 +71,7 @@ void setup() {
   Serial.printf("(If the update succeeds, the reboot should prevent us ever "
                 "getting here.)\n");
   Serial.printf("CheckOTAForUpdate returned %d (%s)\n\n", ret, errtext(ret));
+#endif
 }
 
 void loop() {}
