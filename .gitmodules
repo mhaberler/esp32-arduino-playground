@@ -1,0 +1,3 @@
+[submodule "lib/Functor"]
+	path = lib/Functor
+	url = https://github.com/mhaberler/Functor.git
