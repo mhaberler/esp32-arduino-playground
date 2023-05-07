@@ -5,9 +5,9 @@
 #include <Arduino.h>
 
 CyclicTask task(
-    "repeat", 1000, 10, []() { Serial.println("hi"); }, 5);
+    "repeat", 1000, 10, []() { Serial.println("hi"); });
 CyclicTask task2(
-    "repeat2", 1000, 10, []() { Serial.printf("there\n"); }, 5);
+    "repeat2", 1000, 10, []() { Serial.printf("there\n"); });
 
 void setup() {
   int i = 4711;
