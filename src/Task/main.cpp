@@ -29,6 +29,14 @@ void setup() {
   delay(300);
   TOGGLE(ISR_PIN);
   task2.setRate(5);
+  delay(100);
+  task.suspend();
+  delay(100);
+  task.resume();
+  delay(100);
+  task.suspend();
+  delay(100);
+  task.resume();
 }
 
 void loop() {
