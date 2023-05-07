@@ -2,6 +2,8 @@
 
 #include "freertos-all.h"
 #include <Arduino.h>
+#include "CyclicTask.hpp"
+
 
 // Task task("name",1000,10, [](){ static size_t count=0;
 // queue.Enqueue(&(++count));});
