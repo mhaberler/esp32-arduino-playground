@@ -7,3 +7,6 @@
 [submodule "platformio_version_increment"]
 	path = platformio_version_increment
 	url = https://github.com/mhaberler/platformio_version_increment.git
+[submodule "lib/arduino-freertos-addons"]
+	path = lib/arduino-freertos-addons
+	url = https://github.com/mhaberler/arduino-freertos-addons.git

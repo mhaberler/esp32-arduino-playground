@@ -1,80 +1,198 @@
+/****************************************************************************
+ *
+ *  Copyright (c) 2023, Michael Becker (michael.f.becker@gmail.com)
+ *
+ *  This file is part of the FreeRTOS Add-ons project.
+ *
+ *  Source Code:
+ *  https://github.com/michaelbecker/freertos-addons
+ *
+ *  Project Page:
+ *  http://michaelbecker.github.io/freertos-addons/
+ *
+ *  On-line Documentation:
+ *  http://michaelbecker.github.io/freertos-addons/docs/html/index.html
+ *
+ *  MIT License
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files
+ *  (the "Software"), to deal in the Software without restriction, including
+ *  without limitation the rights to use, copy, modify, merge, publish,
+ *  distribute, sublicense, and/or sell copies of the Software, and to
+ *  permit persons to whom the Software is furnished to do so,subject to the
+ *  following conditions:
+ *
+ *  + The above copyright notice and this permission notice shall be included
+ *    in all copies or substantial portions of the Software.
+ *  + Credit is appreciated, but not required, if you find this project
+ *    useful enough to include in your application, product, device, etc.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ *  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ *  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ *  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ *  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ *  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ ***************************************************************************/
 #include <Arduino.h>
-#include <Streaming.h>
-#include <Functor.h>
+// #include "task.h"
+// #include "FreeRTOS.h"
+#include "tasklet.hpp"
+#include "thread.hpp"
+#include "ticks.hpp"
+#include <iostream>
+// #include <stdio.h>
 
-const long BAUD = 115200;
+using namespace cpp_freertos;
+using namespace std;
 
-//do5Times() is a function that takes a functor and invokes it 5 times
+class TestTasklet : public Tasklet {
 
-void do5Times(const Functor1<int> & doIt)
-{
-  for(int i=0; i<5; ++i)
-  {
-    doIt(i);
-  }
-}
-
-//Here are some standalone functions
-
-void fred(int i)
-{
-  Serial << "fred: " << i << endl;
-}
-
-int ethel(long l)
-{
-  Serial << "ethel: " << l << endl;
-  return l;
-}
-
-//Here is a class with a virtual function, and a derived class
-
-class B
-{
 public:
-  virtual void ricky(int i)
-  {
-    Serial << "B::ricky: " << i << endl;
-  }
+  TestTasklet(int id) : Tasklet(), Id(id){};
+
+  ~TestTasklet() { CheckForSafeDelete(); }
+
+protected:
+  virtual void Run(uint32_t parameter) {
+    cout << "Running Tasket[" << Id << "](" << parameter << ")" << endl;
+  };
+
+private:
+  int Id;
 };
 
-class D : public B
-{
+class TestTaskletWithReschedule : public Tasklet {
+
 public:
-  void ricky(int i)
-  {
-    Serial << "D::ricky: " << i << endl;
-  }
+  TestTaskletWithReschedule(int id) : Tasklet(), Id(id) {
+    cout << "CTOR TestTaskletWithReschedule" << endl;
+  };
+
+  ~TestTaskletWithReschedule() {
+    cout << "DTOR TestTaskletWithReschedule" << endl;
+    CheckForSafeDelete();
+  };
+
+protected:
+  virtual void Run(uint32_t parameter) {
+    cout << "Running TasketWithReschedule[" << Id << "](" << parameter << ")"
+         << endl;
+
+    for (int i = 0; i < 100000; i++)
+      Thread::Yield();
+
+    cout << "Complete TasketWithReschedule[" << Id << "](" << parameter << ")"
+         << endl;
+  };
+
+private:
+  int Id;
 };
 
-void setup()
-{
+class TestThread : public Thread {
+
+public:
+  TestThread() : Thread("Thread", 100, configMAX_PRIORITIES - 1) { Start(); };
+
+protected:
+  virtual void Run() {
+
+    cout << "Starting thread " << endl;
+    TickType_t DelayInSeconds = 3;
+
+    Tasklet *t[5];
+
+    for (int i = 0; i < 5; i++) {
+      t[i] = new TestTasklet(i);
+    }
+
+    int Parameter = 10;
+
+    while (true) {
+
+      Delay(Ticks::SecondsToTicks(DelayInSeconds));
+
+      for (int i = 0; i < 5; i++) {
+        //
+        //  Given the Priority of the timer thread, these
+        //  tasklets run as soon as they are scheduled.
+        //
+        cout << "Scheduling tasklet[" << i << "](" << Parameter << ")" << endl;
+        t[i]->Schedule(Parameter);
+      }
+
+      {
+        UBaseType_t OriginalPriority = GetPriority();
+        SetPriority(configMAX_PRIORITIES - 1);
+        TestTaskletWithReschedule destructorTest(100);
+        cout << "Scheduling destructorTest[" << 100 << "](" << 0 << ")" << endl;
+        destructorTest.Schedule(0);
+        SetPriority(OriginalPriority);
+      }
+
+      cout << "****************" << endl;
+
+      Parameter++;
+    }
+  };
+
+private:
+  int DelayInSeconds;
+};
+
+int main(void) {
+  cout << "Testing FreeRTOS C++ wrappers" << endl;
+  cout << "Tasklets" << endl;
+
+  TestThread thread;
+
+  Thread::StartScheduler();
+
+  //
+  //  We shouldn't ever get here unless someone calls
+  //  Thread::EndScheduler()
+  //
+
+  cout << "Scheduler ended!" << endl;
+
+  return 0;
+}
+
+void vAssertCalled(unsigned long ulLine, const char *const pcFileName) {
+  printf("ASSERT: %s : %d\n", pcFileName, (int)ulLine);
+  while (1)
+    ;
+}
+
+unsigned long ulGetRunTimeCounterValue(void) { return 0; }
+
+void vConfigureTimerForRunTimeStats(void) { return; }
+
+extern "C" void vApplicationMallocFailedHook(void);
+void vApplicationMallocFailedHook(void) {
+  while (1)
+    ;
+}
+
+void setup() {
   Serial.begin(BAUD);
   delay(1000);
 
-  //create a typedef of the functor type to simplify dummy argument
-  typedef Functor1<int> * FtorType;
+  cout << "Testing FreeRTOS C++ wrappers" << endl;
+  cout << "Tasklets" << endl;
 
-  Functor1<int> ftor; //a functor variable
-  //make a functor from ptr-to-function
-  ftor = makeFunctor((FtorType)0,fred);
-  Serial << "sizeof(ftor) = " << sizeof(ftor) << "\n";
-  do5Times(ftor);
-  //note ethel is not an exact match - ok, is compatible
-  ftor = makeFunctor((FtorType)0,ethel);
-  Serial << "sizeof(ftor) = " << sizeof(ftor) << "\n";
-  do5Times(ftor);
-
-  //create a D object to be a callback target
-  D myD;
-  //make functor from object and ptr-to-member-func
-  ftor = makeFunctor((FtorType)0,myD,&B::ricky);
-  Serial << "sizeof(ftor) = " << sizeof(ftor) << "\n";
-  do5Times(ftor);
-
-  Serial << "\n";
+  TestThread thread;
+  Thread::StartScheduler();
+  //
+  //  We shouldn't ever get here unless someone calls
+  //  Thread::EndScheduler()
+  //
+  cout << "Scheduler ended!" << endl;
+  cout << "\n";
 }
 
-void loop()
-{
-}
+void loop() {}
