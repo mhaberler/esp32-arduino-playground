@@ -10,3 +10,15 @@
 [submodule "lib/arduino-freertos-addons"]
 	path = lib/arduino-freertos-addons
 	url = https://github.com/mhaberler/arduino-freertos-addons.git
+[submodule "lib/arduino-audio-tools"]
+	path = lib/arduino-audio-tools
+	url = https://github.com/mhaberler/arduino-audio-tools.git
+[submodule "lib/ESP32-PsRamFS"]
+	path = lib/ESP32-PsRamFS
+	url = https://github.com/mhaberler/ESP32-PsRamFS.git
+[submodule "lib/arduino-fmt"]
+	path = lib/arduino-fmt
+	url = https://github.com/mhaberler/arduino-fmt.git
+[submodule "lib/fmtlib"]
+	path = lib/fmtlib
+	url = https://github.com/mhaberler/fmt.git
