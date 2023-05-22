@@ -22,3 +22,6 @@
 [submodule "lib/fmtlib"]
 	path = lib/fmtlib
 	url = https://github.com/mhaberler/fmt.git
+[submodule "lib/SdFat"]
+	path = lib/SdFat
+	url = https://github.com/mhaberler/SdFat.git
